@@ -59,18 +59,19 @@ void write_binary(int value,std::ofstream &outfile)
  * Helper methods for instruction encoding
  */
 
-int toBin(int n){
 
+// converter for decimal to binary
+int DecToBin(int n){
+    std::string binary;
     // Size of an integer is assumed to be 32 bits
     for (int i = 31; i >= 0; i--) {
         int k = n >> i;
         if (k & 1)
-            cout << "1";
+            binary+="1";
         else
-            cout << "0";
+            binary+= "0";
     }
-
-
+    return stoi(binary);
 }
 
 
@@ -81,7 +82,12 @@ int encode_Rtype(int opcode, int rs, int rt, int rd, int shftamt, int funccode) 
 
 //Utility function for encoding an arithmetic "I" type function
 int encode_Itype(int opcode, int rs, int rt, int imm) {
-    return (opcode << 26) + (rs << 21) + (rt << 16) + imm;
+    return (opcode << 26) + (rs << 21) + (rt << 16) + DecToBin(imm);
+}
+
+//Utility function for encoding an arithmetic "I" type function
+int encode_Jtype(int opcode, int address) {
+    return (opcode << 26) + HexToBin(address);
 }
 
 /**
