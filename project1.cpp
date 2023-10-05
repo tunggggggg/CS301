@@ -80,18 +80,25 @@ int main(int argc, char* argv[]) {
         }
         i++;
     }
-
+    std::vector<std::string> label_names;
+    for(int j = 0; j < instructions.size(); j++) {
+        std::vector<std::string> terms = split(instructions[j], WHITESPACE+",()");
+        if (terms.size() == 1){ //if label
+            label_names.push_back(terms.pop_back());
+        }
+    }
+    
     int label_num = 0;
-    while(i<instructions.size()){
-        //insturctions.zise()-i * 4
-
-            std::vector<std::string> terms = split(instructions[i+1], WHITESPACE+",()");
-            std::string label = terms[0];
-            label.pop_back();
-            static_member[label] = label_num;
-            label_num += (terms.size() - 2) * 4; //how many static fields a member has
-            i++;
-     }
+    int count_labels=0;
+    
+    for(int j = 0; j < instructions.size(); j++) {
+        std::vector<std::string> terms = split(instructions[j], WHITESPACE+",()");
+        if (terms.size() == 1 && terms[0] != "syscall"){ //if label
+            count_labels += 1;
+            instruction_labels[label_names[count_labels-1]] = (j + 1 - count_labels)*4;
+        }
+    }
+    
 
     /** Phase 2
      * Process all static memory, output to static memory file
