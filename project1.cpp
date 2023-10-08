@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     }
     //Prepare output files
     std::ofstream inst_outfile, static_outfile;
-    static_outfile.open(argv[argc - 1], std::ios::binary);
+    static_outfile.open(argv[argc - 2], std::ios::binary);
     inst_outfile.open(argv[argc - 1], std::ios::binary);
     std::vector<std::string> instructions;
 
@@ -75,35 +75,43 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, int> instruction_labels;
     i = 0;
     while (i<instructions.size()){
-        if (instructions[i] == ".main"){
+        if (instructions[i] == "main:"){
             break;
         }
         i++;
     }
     std::vector<std::string> label_names;
-    for(int j = 0; j < instructions.size(); j++) {
+    for(int j = i; j < instructions.size(); j++) {
         std::vector<std::string> terms2 = split(instructions[j], WHITESPACE+",()");
-        if (terms.size() == 1){ //if label
-            label_names.push_back(terms2.pop_back());
+        if (terms2.size() == 1 && terms2[0] != "syscall"){ //if label
+            terms2[0].pop_back();
+            label_names.push_back(terms2[0]);
         }
     }
     
-    int label_num = 0;
     int count_labels=0;
     
-    for(int j = 0; j < instructions.size(); j++) {
+    
+    for(int j = i; j < instructions.size(); j++) {
         std::vector<std::string> terms3 = split(instructions[j], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
             count_labels += 1;
-            instruction_labels[label_names[count_labels-1]] = (j + 1 - count_labels)*4;
+            instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels)*4;
         }
     }    
+
+
+  for (auto el: instruction_labels){
+    std::cout<<el.first<< " " << el.second <<std::endl;
+  }
+    
 
     //Phase 2
     i = 0;
     std::vector<int> staticToWrite;
     while (i<instructions.size()){
         if (instructions[i] == ".data"){
+            i++;
             break;
         }
         i++;
@@ -117,7 +125,7 @@ int main(int argc, char* argv[]) {
             if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
                 staticToWrite.push_back(instruction_labels.at(terms_1[j]));           //Add the value associated with that key to toWrite
             } else {
-                staticToWrite.push_back(terms_1[j]);                                  //Else just add it directly
+                staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
             }
         }
         i++;
@@ -132,6 +140,7 @@ int main(int argc, char* argv[]) {
      * Process all instructions, output to instruction memory file
      * TODO: Almost all of this, it only works for adds
      */
+
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -141,26 +150,23 @@ int main(int argc, char* argv[]) {
         else if (inst_type == "sub") {
             write_binary(encode_Rtype(0,registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 34),inst_outfile);
         }
-        /// begin question encode_Itype function correct? it's in project1.h
-        /// the thing is I convert to binary but I do not know how many bits to allocate. 
-        /// How to know? And how to do?
         else if (inst_type == "addi") {
-            write_binary(encode_Itype(8, registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
+            write_binary(encode_Itype(8, registers[terms[2]], registers[terms[1]], stoi(terms[3])), inst_outfile);
         }
-        /// end question
-        else if (inst_type == "mult"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
-        }
-        else if (inst_type == "div"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 27), inst_outfile);
-        }
-        else if (inst_type == "mflo"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 19), inst_outfile);
-        }
-        else if (inst_type == "mfhi"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
-        }
+       // else if (inst_type == "mult"){
+         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
+        //}
+        //else if (inst_type == "div"){
+         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 27), inst_outfile);
+        //}
+        //else if (inst_type == "mflo"){
+         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 19), inst_outfile);
+        //}
+        //else if (inst_type == "mfhi"){
+          //  write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
+        //}
 
+        /*
         /// begin question: since it's Rtype, I am using encode_Rtype(). Is it correct to have 0 in place
         /// of the second source register?
         else if (inst_type == "sll"){
@@ -170,13 +176,16 @@ int main(int argc, char* argv[]) {
             write_binary(encode_Rtype(0, registers[terms[2]], 0, registers[terms[1]], stoi(terms[3]), 2), inst_outfile);
         }
         /// end question
-
+        */
+       // lw $t0, 4($s0): rt - $t0 (term 1), rs - $s0 (term3), offset - 4 (term2)
         else if (inst_type == "lw") {
-            write_binary(encode_Itype(35,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
+            std::cout << terms[0] << std::endl; //registers[terms[3]]<< registers[terms[1]]<< registers[terms[2]]<< std::endl;
+            //write_binary(encode_Itype(35,registers[terms[3]], registers[terms[1]], registers[terms[1]]+stoi(terms[2])), inst_outfile);
         }
-        else if (inst_type == "sw") {
-            write_binary(encode_Itype(43,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
-        }
+       // else if (inst_type == "sw") {
+            //write_binary(encode_Itype(43,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
+        //}
+        /*
         else if (inst_type == "slt"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 42), inst_outfile);
         }
@@ -195,10 +204,10 @@ int main(int argc, char* argv[]) {
 
         /// begin question. For jType instructions, how do I know the address of label?
         else if (inst_type == "j"){
-            write_binary(encode_Jtype(2, ), inst_outfile);
+            //write_binary(encode_Jtype(2, ), inst_outfile);
         }
         else if (inst_type == "jal"){
-            write_binary(encode_Jtype(3, ), inst_outfile);
+            //write_binary(encode_Jtype(3, ), inst_outfile);
         }
         /// end question
         else if (inst_type == "la"){
@@ -208,12 +217,13 @@ int main(int argc, char* argv[]) {
         // do I just write 000000 00000 00000 11010 00000 001100 to file?
         else if (inst_type == "syscall"){
             //write_binary(, inst_outfile);
-        }
+        }*/
 
-
-
-       
     }
-}
+
+    static_outfile.close();
+    inst_outfile.close();  
+    }
+
 
 #endif

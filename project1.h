@@ -82,12 +82,12 @@ int encode_Rtype(int opcode, int rs, int rt, int rd, int shftamt, int funccode) 
 
 //Utility function for encoding an arithmetic "I" type function
 int encode_Itype(int opcode, int rs, int rt, int imm) {
-    return (opcode << 26) + (rs << 21) + (rt << 16) + DecToBin(imm);
+    return (opcode << 26) + (rs << 21) + (rt << 16) + imm;
 }
 
 //Utility function for encoding an arithmetic "I" type function
 int encode_Jtype(int opcode, int address) {
-    return (opcode << 26) + HexToBin(address);
+    return (opcode << 26) + address;
 }
 
 /**
