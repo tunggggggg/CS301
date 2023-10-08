@@ -8,12 +8,14 @@ main:
   addi $s0, $zero, 100 #this comment needs to be ignored
 loop:
   add $a0, $s0, $0 #call f with parameter i
-  jal f
   addi $s0, $v0, 0 #i = f(i)
-  bne $s0, $zero, loop
-  addi $v0, $0, 10
-  syscall
+  addi $s0, $0, 4 #($s0)
+  lw $t0, 4($s0)
+  sw $t0, 4($s1) 
+  beq $t0, $s0, f
+  sll $t0, $t0, 2
+  srl $t0, $t0, 2
+  slt $t0, $t1, $0
+  #bne $t0, $0, f
 f:
-  la $t0, array
-  srl $v0, $a0, 1
-  jr $ra
+  addi $t4, $0, 0

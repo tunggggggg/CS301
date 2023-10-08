@@ -135,12 +135,15 @@ int main(int argc, char* argv[]) {
         write_binary(staticToWrite[j],static_outfile);
     }
 
+ //for (auto el: instructions){
+   // std::cout<<el<<std::endl;
+ // }
 
     /** Phase 3
      * Process all instructions, output to instruction memory file
      * TODO: Almost all of this, it only works for adds
      */
-
+    
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -153,48 +156,47 @@ int main(int argc, char* argv[]) {
         else if (inst_type == "addi") {
             write_binary(encode_Itype(8, registers[terms[2]], registers[terms[1]], stoi(terms[3])), inst_outfile);
         }
-       // else if (inst_type == "mult"){
-         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
-        //}
-        //else if (inst_type == "div"){
-         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 27), inst_outfile);
-        //}
-        //else if (inst_type == "mflo"){
-         //   write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 19), inst_outfile);
-        //}
-        //else if (inst_type == "mfhi"){
-          //  write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
-        //}
-
-        /*
-        /// begin question: since it's Rtype, I am using encode_Rtype(). Is it correct to have 0 in place
-        /// of the second source register?
+        else if (inst_type == "mult"){
+           write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
+        }
+        else if (inst_type == "div"){
+            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 27), inst_outfile);
+        }
+        else if (inst_type == "mflo"){
+           write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 19), inst_outfile);
+        }
+        else if (inst_type == "mfhi"){
+            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
+        }
+        
         else if (inst_type == "sll"){
-            write_binary(encode_Rtype(0, registers[terms[2]], 0, registers[terms[1]], stoi(terms[3]), 0), inst_outfile);
+            write_binary(encode_Rtype(0, 0, registers[terms[2]], registers[terms[1]], stoi(terms[3]), 0), inst_outfile);
         }
-        else if (inst_type == "slr"){
-            write_binary(encode_Rtype(0, registers[terms[2]], 0, registers[terms[1]], stoi(terms[3]), 2), inst_outfile);
+        else if (inst_type == "srl"){
+            write_binary(encode_Rtype(0, 0, registers[terms[2]], registers[terms[1]], stoi(terms[3]), 2), inst_outfile);
         }
-        /// end question
-        */
-       // lw $t0, 4($s0): rt - $t0 (term 1), rs - $s0 (term3), offset - 4 (term2)
+   
+        //lw $t0, 4($s0): rt - $t0 (term 1), rs - $s0 (term3), offset - 4 (term2)
         else if (inst_type == "lw") {
-            std::cout << terms[0] << std::endl; //registers[terms[3]]<< registers[terms[1]]<< registers[terms[2]]<< std::endl;
-            //write_binary(encode_Itype(35,registers[terms[3]], registers[terms[1]], registers[terms[1]]+stoi(terms[2])), inst_outfile);
+            //std::cout << "" << std::endl; registers[terms[3]]<< registers[terms[1]]<< registers[terms[2]]<< std::endl;
+            write_binary(encode_Itype(35,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
         }
-       // else if (inst_type == "sw") {
-            //write_binary(encode_Itype(43,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
-        //}
-        /*
+        else if (inst_type == "sw") {
+            write_binary(encode_Itype(43,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
+        }
         else if (inst_type == "slt"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 42), inst_outfile);
         }
+
         else if (inst_type == "beq") {
-            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
+            int currentLine = std::distance(instructions.begin(),find(instructions.begin(), instructions.end(),inst));
+            int branchTo = instruction_labels.at(terms[3]);
+            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
         }
         else if (inst_type == "bne") {
             write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
         }
+        /*
         else if (inst_type == "jalr"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 9), inst_outfile);
         }
@@ -202,7 +204,6 @@ int main(int argc, char* argv[]) {
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 8), inst_outfile);
         }
 
-        /// begin question. For jType instructions, how do I know the address of label?
         else if (inst_type == "j"){
             //write_binary(encode_Jtype(2, ), inst_outfile);
         }
