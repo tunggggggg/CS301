@@ -92,6 +92,9 @@ int encode_Jtype(int opcode, int address) {
     return (opcode << 26) + address;
 }
 
+static std::vector<std::string> valid_instructions = {"add", "addi", "sub", "mult", "div", "mflo", "mfhi", "sll", "srl", "lw", "sw", "slt", "beq", "bne", "j", "jal",
+"jr", "jalr", "syscall", "la"}
+
 /**
  * Register name map
  */
