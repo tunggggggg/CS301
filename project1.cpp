@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
         std::vector<std::string> terms3 = split(instructions[j], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
             count_labels += 1;
-            instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels)*4;
+            instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels);
         }
     }    
 
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         std::vector<std::string> terms_1 = split(instructions[i], WHITESPACE+",()");
         for (int j = 2; j < terms_1.size(); j++) {
             if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
-                staticToWrite.push_back(instruction_labels.at(terms_1[j]));           //Add the value associated with that key to toWrite
+                staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
             } else {
                 staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
             }
@@ -144,6 +144,7 @@ int main(int argc, char* argv[]) {
      * TODO: Almost all of this, it only works for adds
      */
     
+        int line_Num = 0;
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -188,22 +189,27 @@ int main(int argc, char* argv[]) {
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 42), inst_outfile);
         }
 
+
         else if (inst_type == "beq") {
-            int currentLine = std::distance(instructions.begin(),find(instructions.begin(), instructions.end(),inst));
             int branchTo = instruction_labels.at(terms[3]);
-            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
+            write_binary(line_Num, inst_outfile);
+            //int branchTo = instruction_labels.at(terms[3]);
+            //write_binary(currentLine, inst_outfile);
         }
         else if (inst_type == "bne") {
-            write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
+            int currentLine = std::distance(instructions.begin(),find(instructions.begin(), instructions.end(),inst));
+            int branchTo = instruction_labels.at(terms[3]);
+            write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
         }
-        /*
+        
+
         else if (inst_type == "jalr"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 9), inst_outfile);
         }
         else if (inst_type == "jr"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 8), inst_outfile);
         }
-
+        /*
         else if (inst_type == "j"){
             //write_binary(encode_Jtype(2, ), inst_outfile);
         }
@@ -219,6 +225,7 @@ int main(int argc, char* argv[]) {
         else if (inst_type == "syscall"){
             //write_binary(, inst_outfile);
         }*/
+        line_Num++;
 
     }
 
