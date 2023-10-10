@@ -54,6 +54,9 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    for (std::string inst : instructions){
+        std::cout << inst << std::endl;
+    }
 
     // determine numbers for static members
     std::unordered_map<std::string, int> static_member;
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]) {
 
         
     int label_num = 0;
-    while(instructions[i+1]!=".text"){
+    while(raw_instructions[i+1]!=".text"){
             std::vector<std::string> terms1 = split(raw_instructions[i+1], WHITESPACE+",()");
             std::string label = terms1[0];
             label.pop_back();
@@ -86,8 +89,8 @@ int main(int argc, char* argv[]) {
         i++;
     }
     std::vector<std::string> label_names;
-    for(int j = i; j < instructions.size(); j++) {
-        std::vector<std::string> terms2 = split(instructions[j], WHITESPACE+",()");
+    for(int j = i; j < raw_instructions.size(); j++) {
+        std::vector<std::string> terms2 = split(raw_instructions[j], WHITESPACE+",()");
         if (terms2.size() == 1 && terms2[0] != "syscall"){ //if label
             terms2[0].pop_back();
             label_names.push_back(terms2[0]);
@@ -145,7 +148,7 @@ int main(int argc, char* argv[]) {
      * Process all instructions, output to instruction memory file
      * TODO: Almost all of this, it only works for adds
      */
-    
+    int line_number = 0;
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -193,44 +196,45 @@ int main(int argc, char* argv[]) {
 
         else if (inst_type == "beq") {
             int branchTo = instruction_labels.at(terms[3]);
-            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
+            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - line_number - 1), inst_outfile);
         }
         else if (inst_type == "bne") {
-            int currentLine = std::distance(instructions.begin(),find(instructions.begin(), instructions.end(),inst));
             int branchTo = instruction_labels.at(terms[3]);
-            write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
+            write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], branchTo - line_number - 1), inst_outfile);
         }
         
 
         else if (inst_type == "jalr"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 9), inst_outfile);
+            write_binary(encode_Rtype(0, registers[terms[1]], 0, registers.at("$ra"), 0, 9), inst_outfile);
         }
         else if (inst_type == "jr"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 8), inst_outfile);
+            write_binary(encode_Rtype(0, registers[terms[1]], 0, 0, 0, 8), inst_outfile);
         }
-        /*
+        
         else if (inst_type == "j"){
-            //write_binary(encode_Jtype(2, ), inst_outfile);
+            int branchTo = instruction_labels.at(terms[1]);
+            write_binary(encode_Jtype(2, branchTo), inst_outfile);
         }
         else if (inst_type == "jal"){
-            //write_binary(encode_Jtype(3, ), inst_outfile);
+            int branchTo = instruction_labels.at(terms[1]);
+            write_binary(encode_Jtype(3, branchTo), inst_outfile);
         }
         /// end question
         else if (inst_type == "la"){
-            //write_binary(, inst_outfile);
+            int branchTo = instruction_labels.at(terms[2]);
+            write_binary(encode_Itype(8, registers[terms[1]], registers.at("$0"), branchTo*4), inst_outfile);
         }
 
-        // do I just write 000000 00000 00000 11010 00000 001100 to file?
         else if (inst_type == "syscall"){
-            //write_binary(, inst_outfile);
-        }*/
+            write_binary(encode_Rtype(0, 0, 0, 26, 0, 12), inst_outfile);
+        }
        
-
+        line_number++;
     }
-
+    
     static_outfile.close();
     inst_outfile.close();  
-    }
+}
 
 
 #endif
