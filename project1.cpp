@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 int main(int argc, char* argv[]) {
     if (argc < 4) // Checks that at least 3 arguments are given in command line
@@ -20,6 +21,7 @@ int main(int argc, char* argv[]) {
     static_outfile.open(argv[argc - 2], std::ios::binary);
     inst_outfile.open(argv[argc - 1], std::ios::binary);
     std::vector<std::string> instructions;
+    std::vector<std::string> raw_instructions;
 
     /**
      * Phase 1:
@@ -45,16 +47,19 @@ int main(int argc, char* argv[]) {
             if (str == "") { //Ignore empty lines
                 continue;
             }
-            instructions.push_back(str); // TODO This will need to change for labels
+            raw_instructions.push_back(str); // TODO This will need to change for labels
+            std::vector<std::string> termsth = split(str, WHITESPACE+",()");
+            if (std::find(valid_instructions.begin(), valid_instructions.end(), termsth[0]) != valid_instructions.end()) {
+                instructions.push_back(str);
+            }
         }
-        infile.close();
     }
 
     // determine numbers for static members
     std::unordered_map<std::string, int> static_member;
     int i = 0;
-    while (i<instructions.size()){
-        if (instructions[i] == ".data"){
+    while (i<raw_instructions.size()){
+        if (raw_instructions[i] == ".data"){
             break;
         }
         i++;
@@ -63,7 +68,7 @@ int main(int argc, char* argv[]) {
         
     int label_num = 0;
     while(instructions[i+1]!=".text"){
-            std::vector<std::string> terms1 = split(instructions[i+1], WHITESPACE+",()");
+            std::vector<std::string> terms1 = split(raw_instructions[i+1], WHITESPACE+",()");
             std::string label = terms1[0];
             label.pop_back();
             static_member[label] = label_num;
@@ -74,8 +79,8 @@ int main(int argc, char* argv[]) {
 
     std::unordered_map<std::string, int> instruction_labels;
     i = 0;
-    while (i<instructions.size()){
-        if (instructions[i] == "main:"){
+    while (i<raw_instructions.size()){
+        if (raw_instructions[i] == "main:"){
             break;
         }
         i++;
@@ -92,8 +97,8 @@ int main(int argc, char* argv[]) {
     int count_labels=0;
     
     
-    for(int j = i; j < instructions.size(); j++) {
-        std::vector<std::string> terms3 = split(instructions[j], WHITESPACE+",()");
+    for(int j = i; j < raw_instructions.size(); j++) {
+        std::vector<std::string> terms3 = split(raw_instructions[j], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
             count_labels += 1;
             instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels)*4;
@@ -101,26 +106,22 @@ int main(int argc, char* argv[]) {
     }    
 
 
-  for (auto el: instruction_labels){
-    std::cout<<el.first<< " " << el.second <<std::endl;
-  }
-    
 
     //Phase 2
     i = 0;
     std::vector<int> staticToWrite;
-    while (i<instructions.size()){
-        if (instructions[i] == ".data"){
+    while (i<raw_instructions.size()){
+        if (raw_instructions[i] == ".data"){
             i++;
             break;
         }
         i++;
     }
-    while (i<instructions.size()){
-        if (instructions[i] == ".text"){
+    while (i<raw_instructions.size()){
+        if (raw_instructions[i] == ".text"){
             break;
         }
-        std::vector<std::string> terms_1 = split(instructions[i], WHITESPACE+",()");
+        std::vector<std::string> terms_1 = split(raw_instructions[i], WHITESPACE+",()");
         for (int j = 2; j < terms_1.size(); j++) {
             if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
                 staticToWrite.push_back(instruction_labels.at(terms_1[j]));           //Add the value associated with that key to toWrite
@@ -134,16 +135,13 @@ int main(int argc, char* argv[]) {
     for (int j = 0; j < staticToWrite.size(); j++) {
         write_binary(staticToWrite[j],static_outfile);
     }
-
- //for (auto el: instructions){
-   // std::cout<<el<<std::endl;
- // }
+    
 
     /** Phase 3
      * Process all instructions, output to instruction memory file
      * TODO: Almost all of this, it only works for adds
      */
-    
+    int lineNumber = 0;
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -189,9 +187,8 @@ int main(int argc, char* argv[]) {
         }
 
         else if (inst_type == "beq") {
-            int currentLine = std::distance(instructions.begin(),find(instructions.begin(), instructions.end(),inst));
             int branchTo = instruction_labels.at(terms[3]);
-            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - currentLine - 1), inst_outfile);
+            write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo/4 - currentLine - 1), inst_outfile);
         }
         else if (inst_type == "bne") {
             write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], stoi(terms[3])), inst_outfile);
