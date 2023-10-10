@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
 
 
   for (auto el: instruction_labels){
-    std::cout<<el.first<< " " << el.second <<std::endl;
+    std::cout<<el.first<< " " << el.second << std::endl;
   }
     
 
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
      * TODO: Almost all of this, it only works for adds
      */
     
-        int line_Num = 0;
+
     for(std::string inst : instructions) {
         std::vector<std::string> terms = split(inst, WHITESPACE+",()");
         std::string inst_type = terms[0];
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 
         else if (inst_type == "beq") {
             int branchTo = instruction_labels.at(terms[3]);
-            write_binary(line_Num, inst_outfile);
+            //write_binary(line_Num, inst_outfile);
             //int branchTo = instruction_labels.at(terms[3]);
             //write_binary(currentLine, inst_outfile);
         }
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
         else if (inst_type == "syscall"){
             //write_binary(, inst_outfile);
         }*/
-        line_Num++;
+       
 
     }
 
