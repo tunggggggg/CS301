@@ -20,8 +20,9 @@ int main(int argc, char* argv[]) {
     std::ofstream inst_outfile, static_outfile;
     static_outfile.open(argv[argc - 2], std::ios::binary);
     inst_outfile.open(argv[argc - 1], std::ios::binary);
-    std::vector<std::string> instructions;
-    std::vector<std::string> raw_instructions;
+    std::vector<std::string> instructions;                              //instructions only
+    std::vector<std::string> instructionsLabels;                        //instructions and labels
+    std::vector<std::string> raw_instructions;                          //the whole file
 
     /**
      * Phase 1:
@@ -52,6 +53,9 @@ int main(int argc, char* argv[]) {
             if (std::find(valid_instructions.begin(), valid_instructions.end(), termsth[0]) != valid_instructions.end()) {
                 instructions.push_back(str);
             }
+            if (std::find(valid_instructions.begin(), valid_instructions.end(), termsth[0]) != valid_instructions.end() || (termsth.size() == 1 && termsth[0].back() == ':')) {
+                instructionsLabels.push_back(str);
+            }
         }
     }
     for (std::string inst : instructions){
@@ -60,85 +64,65 @@ int main(int argc, char* argv[]) {
 
     // determine numbers for static members
     std::unordered_map<std::string, int> static_member;
-    int i = 0;
+    int i = 1;
     while (i<raw_instructions.size()){
-        if (raw_instructions[i] == ".data"){
-            break;
+        if (raw_instructions[i-1] == ".data"){
+            int label_num = 0;
+            while(raw_instructions[i]!=".text"){
+                std::vector<std::string> terms1 = split(raw_instructions[i], WHITESPACE+",()");
+                std::string label = terms1[0];
+                label.pop_back();
+                static_member[label] = label_num;
+                label_num += (terms1.size() - 2) * 4; //how many static fields a member has
+                i++;
+            }
         }
         i++;
-    }
-
-        
-    int label_num = 0;
-    while(raw_instructions[i+1]!=".text"){
-            std::vector<std::string> terms1 = split(raw_instructions[i+1], WHITESPACE+",()");
-            std::string label = terms1[0];
-            label.pop_back();
-            static_member[label] = label_num;
-            label_num += (terms1.size() - 2) * 4; //how many static fields a member has
-            i++;
     }
 
 
     std::unordered_map<std::string, int> instruction_labels;
+    std::vector<std::string> label_names;
     i = 0;
     while (i<raw_instructions.size()){
-        if (raw_instructions[i] == "main:"){
-            break;
-        }
-        i++;
-    }
-    std::vector<std::string> label_names;
-    for(int j = i; j < raw_instructions.size(); j++) {
-        std::vector<std::string> terms2 = split(raw_instructions[j], WHITESPACE+",()");
-        if (terms2.size() == 1 && terms2[0] != "syscall"){ //if label
+        std::vector<std::string> terms2 = split(raw_instructions[i], WHITESPACE+",()");
+        if (terms2.size() == 1 && terms2[0].back() == ':'){ //if label
             terms2[0].pop_back();
             label_names.push_back(terms2[0]);
         }
+            i++;
     }
     
-    int count_labels=0;
-    
-    
-    for(int j = i; j < raw_instructions.size(); j++) {
-        std::vector<std::string> terms3 = split(raw_instructions[j], WHITESPACE+",()");
+    i = 0;
+    int count_labels=0;    
+    while(i<instructionsLabels.size()) {
+        std::vector<std::string> terms3 = split(instructionsLabels[j], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
             count_labels += 1;
-            instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels);
+            instruction_labels[label_names[count_labels-1]] = (i + 1 - count_labels);
         }
     }    
 
-
-  for (auto el: instruction_labels){
-    std::cout<<el.first<< " " << el.second <<std::endl;
-  }
-    
-
     //Phase 2
-    i = 0;
     std::vector<int> staticToWrite;
+    i = 1;
     while (i<raw_instructions.size()){
-        if (raw_instructions[i] == ".data"){
-            i++;
-            break;
-        }
-        i++;
-    }
-    while (i<raw_instructions.size()){
-        if (raw_instructions[i] == ".text"){
-            break;
-        }
-        std::vector<std::string> terms_1 = split(raw_instructions[i], WHITESPACE+",()");
-        for (int j = 2; j < terms_1.size(); j++) {
-            if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
-                staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
-            } else {
-                staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
+        if (raw_instructions[i-1] == ".data"){
+            while(raw_instructions[i]!=".text"){
+                std::vector<std::string> terms_1 = split(raw_instructions[i], WHITESPACE+",()");
+                for (int j = 2; j < terms_1.size(); j++) {
+                    if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
+                        staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
+                    } else {
+                        staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
+                    }
+                }
+                i++;
             }
         }
         i++;
-    }                                                                                 //Completed toWrite
-
+    }
+    
     for (int j = 0; j < staticToWrite.size(); j++) {
         write_binary(staticToWrite[j],static_outfile);
     }
