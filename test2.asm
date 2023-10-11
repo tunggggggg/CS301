@@ -15,7 +15,13 @@ loop:
   beq $t0, $s0, f
   sll $t0, $t0, 2
   srl $t0, $t0, 2
+  bne $t0, $0, f
+  j f
+  jal f
+  jalr $s0
+  jr $s1
   slt $t0, $t1, $0
-  #bne $t0, $0, f
+  la $t0, f
 f:
   addi $t4, $0, 0
+  syscall

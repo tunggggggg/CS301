@@ -11,3 +11,4 @@ main:
     add $s0, $v0, $t0
     addi $v0, $0, 10
     syscall
+function:
