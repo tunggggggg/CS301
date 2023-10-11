@@ -20,8 +20,9 @@ int main(int argc, char* argv[]) {
     std::ofstream inst_outfile, static_outfile;
     static_outfile.open(argv[argc - 2], std::ios::binary);
     inst_outfile.open(argv[argc - 1], std::ios::binary);
-    std::vector<std::string> instructions;
-    std::vector<std::string> raw_instructions;
+    std::vector<std::string> instructions;                              //instructions only
+    std::vector<std::string> instructionsLabels;                        //instructions and labels
+    std::vector<std::string> raw_instructions;                          //the whole file
 
     /**
      * Phase 1:
@@ -55,6 +56,9 @@ int main(int argc, char* argv[]) {
             else{
                 raw_instructions.push_back(str); //contains static memory or invalid lines
             }
+            if (std::find(valid_instructions.begin(), valid_instructions.end(), termsth[0]) != valid_instructions.end() || (termsth.size() == 1 && termsth[0].back() == ':')) {
+                instructionsLabels.push_back(str);
+            }
         }
     }
     std::cout << "DEBUGGING START" << std::endl;
@@ -68,7 +72,6 @@ int main(int argc, char* argv[]) {
 
     // determine numbers for static members
     std::unordered_map<std::string, int> static_member;
-    /*
     int i = 0;
     while (i<raw_instructions.size()){
         if (raw_instructions[i] == ".data"){
@@ -76,31 +79,9 @@ int main(int argc, char* argv[]) {
         }
         i++;
     }
-    */
-    std::vector<std::string> label_names;
-    std::unordered_map<std::string, int> instruction_labels;
-    int label_num = 0;
-    int count_labels=0;
-    for (int i = 0; i<raw_instructions.size(); i++){
-        std::vector<std::string> terms2 = split(raw_instructions[i], WHITESPACE+",()");
-        if (raw_instructions[i] == ".data"){ //if line contains static members 
-            std::vector<std::string> terms1 = split(raw_instructions[i+1], WHITESPACE+",()");
-            std::string label = terms1[0];
-            label.pop_back();
-            static_member[label] = label_num;
-            label_num += (terms1.size() - 2) * 4; //how many static fields a member has
-        }
-        else {
-            terms2[0].pop_back();
-            label_names.push_back(terms2[0]);
-            //count_labels += 1;
-            instruction_labels[label_names[count_labels]] = (i *4);
-            count_labels += 1;
-        }
-    }
-    
 
-/*
+        
+    int label_num = 0;
     while(raw_instructions[i+1]!=".text"){
             std::vector<std::string> terms1 = split(raw_instructions[i+1], WHITESPACE+",()");
             std::string label = terms1[0];
@@ -119,44 +100,41 @@ int main(int argc, char* argv[]) {
         }
         i++;
     }
+
+
+    std::unordered_map<std::string, int> instruction_labels;
     std::vector<std::string> label_names;
-    for(int j = i; j < raw_instructions.size(); j++) {
-        std::vector<std::string> terms2 = split(raw_instructions[j], WHITESPACE+",()");
-        if (terms2.size() == 1 && terms2[0] != "syscall"){ //if label
+    i = 0;
+    while (i<raw_instructions.size()){
+        std::vector<std::string> terms2 = split(raw_instructions[i], WHITESPACE+",()");
+        if (terms2.size() == 1 && terms2[0].back() == ':'){ //if label
             terms2[0].pop_back();
             label_names.push_back(terms2[0]);
         }
+            i++;
     }
     
-   
-
-    for(int j = 0; j < raw_instructions.size(); j++) {
+    int count_labels=0;
+    
+    
+    for(int j = i; j < raw_instructions.size(); j++) {
         std::vector<std::string> terms3 = split(raw_instructions[j], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
             count_labels += 1;
-            instruction_labels[label_names[count_labels-1]] = (j - i + 1 - count_labels);
+            instruction_labels[label_names[count_labels-1]] = (i + 1 - count_labels);
         }
     }    
     */
 
-  std::cout << "Instruction labels array"<<std::endl;
+
   for (auto el: instruction_labels){
     std::cout<<el.first<< " " << el.second <<std::endl;
   }
-   
+    
 
     //Phase 2
-    //i = 0;
+    i = 0;
     std::vector<int> staticToWrite;
-/*
-    for (int i = i; i<raw_instructions.size(); i++){
-        //raw_instructions.split(".");
-        if (raw_instructions[i] != ){
-            i++;
-            break;
-        }
-    }
-   
     while (i<raw_instructions.size()){
         if (raw_instructions[i] == ".data"){
             i++;
@@ -164,36 +142,20 @@ int main(int argc, char* argv[]) {
         }
         i++;
     }
-    
     while (i<raw_instructions.size()){
         if (raw_instructions[i] == ".text"){
             break;
-        }*/
-    std::cout << "Raw instructions"<< std::endl;
-    for (auto el: raw_instructions){
-        std::cout<<el <<std::endl;
-    }
-
-    for (int i = 0; i<instructions.size(); i++){
-    
-        std::vector<std::string> terms_1 = split(instructions[i], WHITESPACE+",()");
-        
-        for (int j = 0; j < terms_1.size(); j++) {
-            std::cout <<  terms_1[j] << std::endl;
-                if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) { 
-                     std::cout <<  "here" <<std::endl;  //Find the label in the instruction labels map
-                    //staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
-                } else {
-                    std::cout <<  "there" <<instruction_labels.at(terms_1[j])<<std::endl;
-                    staticToWrite.push_back(instruction_labels.at(terms_1[j]));                                  //Else just add it directly
-                }
+        }
+        std::vector<std::string> terms_1 = split(raw_instructions[i], WHITESPACE+",()");
+        for (int j = 2; j < terms_1.size(); j++) {
+            if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
+                staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
+            } else {
+                staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
             }
-    }  
-             
-    std::cout << "Static to Write"<< std::endl;
-    for (auto el: staticToWrite){
-        std::cout<<el <<std::endl;
-    }                                                                      //Completed toWrite
+        }
+        i++;
+    }                                                                                 //Completed toWrite
 
     for (int j = 0; j < staticToWrite.size(); j++) {
         write_binary(staticToWrite[j],static_outfile);
