@@ -171,78 +171,98 @@ int main(int argc, char* argv[]) {
         std::string inst_type = terms[0];
         if (inst_type == "add") {
             write_binary(encode_Rtype(0,registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 32),inst_outfile);
+        std::cout << 1 << std::endl;
         }
         else if (inst_type == "sub") {
             write_binary(encode_Rtype(0,registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 34),inst_outfile);
+            std::cout << 2 << std::endl;
         }
         else if (inst_type == "addi") {
             write_binary(encode_Itype(8, registers[terms[2]], registers[terms[1]], stoi(terms[3])), inst_outfile);
+            std::cout << 3 << std::endl;
         }
         else if (inst_type == "mult"){
            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
+           std::cout << 4 << std::endl;
         }
         else if (inst_type == "div"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 26), inst_outfile);
+            std::cout << 5 << std::endl;
         }
         else if (inst_type == "mflo"){
-           write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 18), inst_outfile);
+           write_binary(encode_Rtype(0, 0, 0, registers[terms[1]], 0, 18), inst_outfile);
+           std::cout << 6 << std::endl;
         }
         else if (inst_type == "mfhi"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
+            write_binary(encode_Rtype(0, 0, 0, registers[terms[1]], 0, 16), inst_outfile);
+            std::cout << 7 << std::endl;
         }
         
         else if (inst_type == "sll"){
             write_binary(encode_Rtype(0, 0, registers[terms[2]], registers[terms[1]], stoi(terms[3]), 0), inst_outfile);
+            std::cout << 8 << std::endl;
         }
         else if (inst_type == "srl"){
             write_binary(encode_Rtype(0, 0, registers[terms[2]], registers[terms[1]], stoi(terms[3]), 2), inst_outfile);
+            std::cout << 9 << std::endl;
         }
    
         //lw $t0, 4($s0): rt - $t0 (term 1), rs - $s0 (term3), offset - 4 (term2)
         else if (inst_type == "lw") {
             //std::cout << "" << std::endl; registers[terms[3]]<< registers[terms[1]]<< registers[terms[2]]<< std::endl;
             write_binary(encode_Itype(35,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
+            std::cout << 10 << std::endl;
         }
         else if (inst_type == "sw") {
             write_binary(encode_Itype(43,registers[terms[3]], registers[terms[1]], stoi(terms[2])), inst_outfile);
+            std::cout << 11 << std::endl;
         }
         else if (inst_type == "slt"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 42), inst_outfile);
+            std::cout << 12 << std::endl;
         }
 
 
         else if (inst_type == "beq") {
             int branchTo = instruction_labels.at(terms[3]);
             write_binary(encode_Itype(4,registers[terms[1]], registers[terms[2]], branchTo - line_number - 1), inst_outfile);
+            std::cout << 13 << std::endl;
         }
         else if (inst_type == "bne") {
             int branchTo = instruction_labels.at(terms[3]);
             write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], branchTo - line_number - 1), inst_outfile);
+            std::cout << 14 << std::endl;
         }
 
         else if (inst_type == "jalr"){
             write_binary(encode_Rtype(0, registers[terms[1]], 0, registers.at("$ra"), 0, 9), inst_outfile);
+            std::cout << 15 << std::endl;
         }
         else if (inst_type == "jr"){
             write_binary(encode_Rtype(0, registers[terms[1]], 0, 0, 0, 8), inst_outfile);
+            std::cout << 16 << std::endl;
         }
         
         else if (inst_type == "j"){       
             int branchTo = instruction_labels.at(terms[1]);
             write_binary(encode_Jtype(2, branchTo), inst_outfile);
+            std::cout << 17 << std::endl;
         }
         else if (inst_type == "jal"){       
             int branchTo = instruction_labels.at(terms[1]);
             write_binary(encode_Jtype(3, branchTo), inst_outfile);
+            std::cout << 18 << std::endl;
         }
         
         else if (inst_type == "la"){  
             int branchTo = static_member.at(terms[2]);
             write_binary(encode_Itype(8, registers.at("$0"), registers[terms[1]], branchTo*4), inst_outfile);
+            std::cout << 19 << std::endl;
             }
 
         else if (inst_type == "syscall"){
             write_binary(encode_Rtype(0, 0, 0, 26, 0, 12), inst_outfile);
+            std::cout << 20 << std::endl;
         }
        
         line_number++;

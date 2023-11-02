@@ -74,6 +74,9 @@
         "memory_resource": "cpp",
         "numeric": "cpp",
         "random": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "csignal": "cpp",
+        "list": "cpp",
+        "cinttypes": "cpp"
     }
 }
