@@ -1,3 +1,8 @@
+/*
+Tung Nguyen
+Alina Enikeeva
+*/
+
 #ifndef __PROJECT1_CPP__
 #define __PROJECT1_CPP__
 
@@ -58,10 +63,11 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    for (std::string inst : instructions){
+/*
+    for (std::string inst : instructionsLabels){
         std::cout << inst << std::endl;
     }
-
+*/
     // determine numbers for static members
     std::unordered_map<std::string, int> static_member;
     int i = 1;
@@ -79,7 +85,10 @@ int main(int argc, char* argv[]) {
         }
         i++;
     }
-
+    
+    for(auto el: static_member){
+        std::cout << el.first <<el.second<< std::endl;
+    }
 
     std::unordered_map<std::string, int> instruction_labels;
     std::vector<std::string> label_names;
@@ -92,28 +101,52 @@ int main(int argc, char* argv[]) {
         }
             i++;
     }
+    /*
+    for(std::string el: label_names){
+        std::cout << el << std::endl;
+    }
+    */
+    
     
     i = 0;
     int count_labels=0;    
     while(i<instructionsLabels.size()) {
-        std::vector<std::string> terms3 = split(instructionsLabels[j], WHITESPACE+",()");
+        std::vector<std::string> terms3 = split(instructionsLabels[i], WHITESPACE+",()");
         if (terms3.size() == 1 && terms3[0] != "syscall"){ //if label
-            count_labels += 1;
+            count_labels += 1;      
+            
+            // find out which line each instruction is on (it is the next line after 
+            // the label (i+1) minus the number of lines that contain only labels and
+            // no instructions)
             instruction_labels[label_names[count_labels-1]] = (i + 1 - count_labels);
+            
         }
+        i++;
     }    
-
+    
+    /*
+    for (auto el : instruction_labels){
+        std::cout << el.first << el.second << std::endl;
+    }
+    */
+    
+    
     //Phase 2
     std::vector<int> staticToWrite;
     i = 1;
+
+    //assign bytes to static memory members
     while (i<raw_instructions.size()){
+        
         if (raw_instructions[i-1] == ".data"){
+            
             while(raw_instructions[i]!=".text"){
                 std::vector<std::string> terms_1 = split(raw_instructions[i], WHITESPACE+",()");
                 for (int j = 2; j < terms_1.size(); j++) {
-                    if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) {    //Find the label in the instruction labels map
+                    if (instruction_labels.find(terms_1[j]) != instruction_labels.end()) { 
+                        //Find the label in the instruction labels map
                         staticToWrite.push_back(instruction_labels.at(terms_1[j])*4);           //Add the value associated with that key to toWrite
-                    } else {
+                    } else {                    
                         staticToWrite.push_back(stoi(terms_1[j]));                                  //Else just add it directly
                     }
                 }
@@ -149,10 +182,10 @@ int main(int argc, char* argv[]) {
            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 24), inst_outfile);
         }
         else if (inst_type == "div"){
-            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 27), inst_outfile);
+            write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 26), inst_outfile);
         }
         else if (inst_type == "mflo"){
-           write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 19), inst_outfile);
+           write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 18), inst_outfile);
         }
         else if (inst_type == "mfhi"){
             write_binary(encode_Rtype(0, registers[terms[2]], registers[terms[3]], registers[terms[1]], 0, 16), inst_outfile);
@@ -186,7 +219,6 @@ int main(int argc, char* argv[]) {
             int branchTo = instruction_labels.at(terms[3]);
             write_binary(encode_Itype(5,registers[terms[1]], registers[terms[2]], branchTo - line_number - 1), inst_outfile);
         }
-        
 
         else if (inst_type == "jalr"){
             write_binary(encode_Rtype(0, registers[terms[1]], 0, registers.at("$ra"), 0, 9), inst_outfile);
@@ -195,19 +227,19 @@ int main(int argc, char* argv[]) {
             write_binary(encode_Rtype(0, registers[terms[1]], 0, 0, 0, 8), inst_outfile);
         }
         
-        else if (inst_type == "j"){
+        else if (inst_type == "j"){       
             int branchTo = instruction_labels.at(terms[1]);
             write_binary(encode_Jtype(2, branchTo), inst_outfile);
         }
-        else if (inst_type == "jal"){
+        else if (inst_type == "jal"){       
             int branchTo = instruction_labels.at(terms[1]);
             write_binary(encode_Jtype(3, branchTo), inst_outfile);
         }
-        /// end question
-        else if (inst_type == "la"){
-            int branchTo = instruction_labels.at(terms[2]);
-            write_binary(encode_Itype(8, registers[terms[1]], registers.at("$0"), branchTo*4), inst_outfile);
-        }
+        
+        else if (inst_type == "la"){  
+            int branchTo = static_member.at(terms[2]);
+            write_binary(encode_Itype(8, registers.at("$0"), registers[terms[1]], branchTo*4), inst_outfile);
+            }
 
         else if (inst_type == "syscall"){
             write_binary(encode_Rtype(0, 0, 0, 26, 0, 12), inst_outfile);
