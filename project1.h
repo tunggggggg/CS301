@@ -84,7 +84,13 @@ int encode_Rtype(int opcode, int rs, int rt, int rd, int shftamt, int funccode) 
 
 //Utility function for encoding an arithmetic "I" type function
 int encode_Itype(int opcode, int rs, int rt, int imm) {
-    return (opcode << 26) + (rs << 21) + (rt << 16) + imm;
+    if (imm<0) {
+        //in two's completement, a negative number is the same as it is a negative in decimal plus 2^(num of bits we wrok in)
+        // subtracting that num is equivalent to adding 2^16
+        return (opcode << 26) + (rs << 21) + (rt << 16) + (imm+pow(2,32) - 4294901760);
+    } else {
+        return (opcode << 26) + (rs << 21) + (rt << 16) + imm;
+    }
 }
 
 //Utility function for encoding an arithmetic "I" type function
@@ -93,7 +99,7 @@ int encode_Jtype(int opcode, int address) {
 }
 
 static std::vector<std::string> valid_instructions = {"add", "addi", "sub", "mult", "div", "mflo", "mfhi", "sll", "srl", "lw", "sw", "slt", "beq", "bne", "j", "jal",
-"jr", "jalr", "syscall", "la"};
+"jr", "jalr", "syscall", "la", "and", "andi", "or", "ori", "xor", "xori", "nor", "abs", "lui", "mov", "sge", "sgt", "sle", "seq", "sne", "bge", "bgt", "ble", "blt", "li"};
 
 /**
  * Register name map
