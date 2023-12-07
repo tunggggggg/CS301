@@ -8,6 +8,8 @@ main:
     sll $t2, $t1, 5
     srl $t8, $t1, 3
     mult $t1, $t1
+    mflo $t0
+    sub $t4, $t0, $t1
     mflo $t3
     div $t2, $t0
     mfhi $s6
